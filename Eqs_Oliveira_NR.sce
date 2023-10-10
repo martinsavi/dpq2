@@ -84,16 +84,26 @@ M=0 //quantidade de microorganismos no início (segundo artigo,0) mol/m³
 espce=0.000023 // assumido pelo artigo - m
 
 solucao=list();
-voltagens = []
-correntes=  []
-etaA = []
-etaC = []
-VOLT=[]
+ACET = []
+O2 =   []
+VOLT = []
+CORR = []
+ETAA=  []
+ETAC = []
+POT =  []
 
-condi = [0,alfaa/2,alfaa*2,Rcell/2,Rcell*2]
-for aux=size(condi,'c')
-    if aux==2 ||aux==3 ; alfaa=condi(aux);end
+original=[alfaa,Rcell]
+condi = [0,alfaa/2,alfaa*2,Rcell/2,Rcell*2] //Condições para a analise de sensibilidade
+for aux=1:size(condi,'c')
+    if aux==2 ||aux==3 ; alfaa=condi(aux); Rcell=original(2) //alfa muda, R não
+    elseif aux==4 ||aux==5 ; Rcell=condi(aux); alfaa=original(1) //R muda, alfa não
+    else alfaa=original(1); Rcell=original(2) //Nada muda
+    end
     
+    voltagens = []
+    correntes=  []
+    etaA = []
+    etaC = []
     for vcell=0.65:-0.05:0.10
     
         // Parâmetros do método numérico:
@@ -147,7 +157,14 @@ for aux=size(condi,'c')
        voltagens = [voltagens,vcell]
        correntes = [correntes,v(16)]
     end
-    VOLT = [VOLT,voltagens]
+    
+    ACET = [ACET,v(1:8)]
+    O2 =   [O2, v(9:12)]
+    VOLT = [VOLT,voltagens']
+    CORR = [CORR,correntes']
+    ETAA=  [ETAA, etaA']
+    ETAC = [ETAC, etaC']
+    POT =  [VOLT.*CORR,(voltagens.*correntes)']
 end
 // imprindo solução aproximada obtida
 //disp('solução')
@@ -163,40 +180,61 @@ disp(solucao) //A lista solucao armazena em cada índice seu um vetor com todas 
     
 //// Gráficos
 
-t = linspace(1,8,8)
-scf(1); plot(t,v(t))
-xlabel('y_i')
-ylabel('[Acetato] mol/L')
+alfaa=original(1)
+Rcell=original(2)
 
-t2 = linspace(1,4,4) + 8
-scf(2); plot(t2,v(t2))
-xlabel('y_i')
-ylabel('[O2] mol/L')
+for aux=0:1 //n de parametros q variam na sensibilidade (alfa e RCell)
+    index = [1,2+2*aux,3+2*aux]
+    t = linspace(1,8,8)
+    scf(1+6*aux); plot(t,ACET(t,index))
+    legenda = [string(original(1+aux)),string(condi(2+2*aux)),string(condi(3+2*aux))]
+    legend(legenda)
+    xlabel('y_i')
+    ylabel('[Acetato] mol/L')
+    
+    t2 = linspace(1,4,4) + 8
+    scf(2+6*aux); plot(t2,O2(:,index))
+    legenda = [string(original(1+aux)),string(condi(2+2*aux)),string(condi(3+2*aux))]
+    legend(legenda)
+    xlabel('y_i')
+    ylabel('[O2] mol/L')
+    
+    scf(3+6*aux); plot(CORR(:,index),VOLT(:,index))
+    legenda = [string(original(1+aux)),string(condi(2+2*aux)),string(condi(3+2*aux))]
+    legend(legenda)
+    xlabel('Icell A/m2' )
+    ylabel('Vcell V')
+    
+    
+    scf(4+6*aux); plot(CORR(:,index),POT(:,index))
+    legenda = [string(original(1+aux)),string(condi(2+2*aux)),string(condi(3+2*aux))]
+    legend(legenda)
+    xlabel('Icell A/m2' )
+    ylabel('Pcell W/m2')
+    
+    scf(5+6*aux); plot(CORR(:,index),ETAA(:,index),[0,12],[0,0])
+    legenda = [string(original(1+aux)),string(condi(2+2*aux)),string(condi(3+2*aux))]
+    legend(legenda)
+    xlabel('Icell A/m2' )
+    ylabel('Sobrepotencial V')
+    title('Anódico')
 
-scf(3); plot(correntes,voltagens)
-xlabel('Icell A/m2' )
-ylabel('Vcell V')
-legend('modelo')
-
-scf(4); plot(correntes,voltagens.*correntes)
-xlabel('Icell A/m2' )
-ylabel('Pcell W/m2')
-legend('modelo')
-
-scf(5); plot(correntes,etaA,correntes,etaC,[0,12],[0,0])
-legend(['Anódico','Catódico'],pos=2)
-xlabel('Icell A/m2' )
-ylabel('Sobrepotencial V')
-
+    scf(6+6*aux); plot(CORR(:,index),ETAC(:,index),[0,12],[0,0])
+    legenda = [string(original(1+aux)),string(condi(2+2*aux)),string(condi(3+2*aux))]
+    legend(legenda)
+    xlabel('Icell A/m2' )
+    ylabel('Sobrepotencial V')
+    title('Catódico')
+end
 
 // exporta dados
-csvWrite(v(t),'acetato.csv',' ',',')
-csvWrite(v(t2),'oxigenio.csv',' ',',')
-csvWrite(voltagens','voltagens.csv',' ',',')
-csvWrite(correntes','correntes.csv',' ',',')
-csvWrite((correntes.*voltagens)','potencias.csv',' ',',')
-csvWrite(etaA','sobrepotencialA.csv',' ',',')
-csvWrite(etaC','sobrepotencialC.csv',' ',',')
+csvWrite(ACET,'acetato.csv',' ',',')
+csvWrite(O2,'oxigenio.csv',' ',',')
+csvWrite(VOLT,'voltagens.csv',' ',',')
+csvWrite(CORR,'correntes.csv',' ',',')
+csvWrite(POT,'potencias.csv',' ',',')
+csvWrite(ETAA,'sobrepotencialA.csv',' ',',')
+csvWrite(ETAC,'sobrepotencialC.csv',' ',',')
 
 
 
