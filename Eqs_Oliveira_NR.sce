@@ -88,61 +88,67 @@ voltagens = []
 correntes=  []
 etaA = []
 etaC = []
+VOLT=[]
 
-for vcell=0.65:-0.05:0.10
-
-    // Parâmetros do método numérico:
-    tolfv = 1.0d-6;  //tolerância na função [mol/tempo]
-    tolv = 1.0d-6;  // tolerância na variação de v [mol/volume]
-    Itmax = 1000; // número máximo de iterações
+condi = [0,alfaa/2,alfaa*2,Rcell/2,Rcell*2]
+for aux=size(condi,'c')
+    if aux==2 ||aux==3 ; alfaa=condi(aux);end
     
-    k = 0; // número da iteração
-    h = 1.0d-8; // incremento usado no cálculo da derivada numérica
+    for vcell=0.65:-0.05:0.10
     
-    ok = 0; // variável que indica critério de parada do while
-    
-    //getf('funcx.sci'); //declarando função 
-    //getd
-    
-    Jac = zeros(N,N); //dimensionando a matriz Jacobiana 
-    
-    //Newton-Raphson
-    while ok == 0 
-      k=k+1;
-      fv = funcv(v,v0,kk,K,alfaa,alfac,q,V,F,A,YxA,fx,espce,Kdec,Rcell,vcell,Ecell,M);    //calcula o vetor fv:
-    
-      if sum(abs(fv)) <= tolfv then   // checando convergência em f(v)
-        ok = 1;
-        disp('fv <=tolfv');
-      else
-        // Calcula a matriz Jacobiana
-        for j=1:16
-          vj = v(j); // guardando o valor de v(j)
-          v(j) = v(j)+h; //incrementando o v(j) em h 
-          fvh = funcv(v,v0,kk,K,alfaa,alfac,q,V,F,A,YxA,fx,espce,Kdec,Rcell,vcell,Ecell,M);
-          Jac(:,j)=(fvh-fv)/h;
-          v(j) = vj;
-        end
-        g = Jac\(-fv); // resolução de sistema linear
-        v = g + v; //x[k+1]
+        // Parâmetros do método numérico:
+        tolfv = 1.0d-6;  //tolerância na função [mol/tempo]
+        tolv = 1.0d-6;  // tolerância na variação de v [mol/volume]
+        Itmax = 1000; // número máximo de iterações
         
-        if sum(abs(g)) <= tolv then  // checando convergência em v
-          ok = 2;
-          disp('g = delta(v) <= tolv');
-        elseif k >= Itmax then  // checando número de iterações
-          ok = 3;
-          disp('k>=Itmax');
+        k = 0; // número da iteração
+        h = 1.0d-8; // incremento usado no cálculo da derivada numérica
+        
+        ok = 0; // variável que indica critério de parada do while
+        
+        //getf('funcx.sci'); //declarando função 
+        //getd
+        
+        Jac = zeros(N,N); //dimensionando a matriz Jacobiana 
+        
+        //Newton-Raphson
+        while ok == 0 
+          k=k+1;
+          fv = funcv(v,v0,kk,K,alfaa,alfac,q,V,F,A,YxA,fx,espce,Kdec,Rcell,vcell,Ecell,M);    //calcula o vetor fv:
+        
+          if sum(abs(fv)) <= tolfv then   // checando convergência em f(v)
+            ok = 1;
+            disp('fv <=tolfv');
+          else
+            // Calcula a matriz Jacobiana
+            for j=1:16
+              vj = v(j); // guardando o valor de v(j)
+              v(j) = v(j)+h; //incrementando o v(j) em h 
+              fvh = funcv(v,v0,kk,K,alfaa,alfac,q,V,F,A,YxA,fx,espce,Kdec,Rcell,vcell,Ecell,M);
+              Jac(:,j)=(fvh-fv)/h;
+              v(j) = vj;
+            end
+            g = Jac\(-fv); // resolução de sistema linear
+            v = g + v; //x[k+1]
+            
+            if sum(abs(g)) <= tolv then  // checando convergência em v
+              ok = 2;
+              disp('g = delta(v) <= tolv');
+            elseif k >= Itmax then  // checando número de iterações
+              ok = 3;
+              disp('k>=Itmax');
+            end
+          end
         end
-      end
+       solucao($+1) = v;
+       //salva p curva de desempenho
+       etaA = [etaA, v(14)]
+       etaC = [etaC, v(15)]
+       voltagens = [voltagens,vcell]
+       correntes = [correntes,v(16)]
     end
-   solucao($+1) = v;
-   //salva p curva de desempenho
-   etaA = [etaA, v(14)]
-   etaC = [etaC, v(15)]
-   voltagens = [voltagens,vcell]
-   correntes = [correntes,v(16)]
+    VOLT = [VOLT,voltagens]
 end
-
 // imprindo solução aproximada obtida
 //disp('solução')
 //v
@@ -162,18 +168,35 @@ scf(1); plot(t,v(t))
 xlabel('y_i')
 ylabel('[Acetato] mol/L')
 
-scf(2); plot(correntes,voltagens)
+t2 = linspace(1,4,4) + 8
+scf(2); plot(t2,v(t2))
+xlabel('y_i')
+ylabel('[O2] mol/L')
+
+scf(3); plot(correntes,voltagens)
 xlabel('Icell A/m2' )
 ylabel('Vcell V')
 legend('modelo')
 
-scf(3); plot(correntes,etaA,correntes,etaC,[0,12],[0,0])
+scf(4); plot(correntes,voltagens.*correntes)
+xlabel('Icell A/m2' )
+ylabel('Pcell W/m2')
+legend('modelo')
+
+scf(5); plot(correntes,etaA,correntes,etaC,[0,12],[0,0])
 legend(['Anódico','Catódico'],pos=2)
 xlabel('Icell A/m2' )
 ylabel('Sobrepotencial V')
 
 
-
+// exporta dados
+csvWrite(v(t),'acetato.csv',' ',',')
+csvWrite(v(t2),'oxigenio.csv',' ',',')
+csvWrite(voltagens','voltagens.csv',' ',',')
+csvWrite(correntes','correntes.csv',' ',',')
+csvWrite((correntes.*voltagens)','potencias.csv',' ',',')
+csvWrite(etaA','sobrepotencialA.csv',' ',',')
+csvWrite(etaC','sobrepotencialC.csv',' ',',')
 
 
 
