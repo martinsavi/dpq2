@@ -1,20 +1,42 @@
 clear; clc;
-a0=[0.50;0.44];
+a0 = [0.50;0.45;0.32;0.205;1e-5]; 
+lb = [0.40,0.30,0.30,0.100,0   ];
+ub = [0.70,0.60,0.50,0.300,5e-1];
 
-[x,fval] =  fmincon(@(a) obj(a),a0,[],[],[],[],[],[],@(a) cons(a));
-% [x,fval] =  fmincon(@obj,x0,[],[],[],[],[],[],@cons);
+%   Iexp = [1.03759418890913	1.93984923218668	4.2105267859144	5.50375960737219	6.48120319236476	7.39849617344079	8.25563855060027	10.2857136886617	11.0676692450222	12.0902260697715
+% ]';
+%     Vexp = [0.66286288281833	0.612695560680013	0.51870282474702	0.517403067839343	0.48963963129269	0.462366184933421	0.423861324718456	0.326127045742691	0.279645383820309	0.229047044443503
+% ]';  dados Borole-Fig4-Furfural - fica ruim
 
-function o = obj(a)
-    Iexp = [.7,1.8,2.1,2.5,4.2,9,11,11.2]';
-    Vexp = [.6/2,.53,.50,.49,.40,.20,.13,.10]';
-    Iteo = zeros(size(Vexp));
+     Iexp = [0.4358974716599329	0.7179486905462856	1.7777778884712203	2.034188146739269	2.2222224013443386	2.585470267224074	2.8632480470144603	3.431623923883132	3.7905986767094046	3.9829063704104404
+]';
+    Vexp = [0.2933823488265998	0.26198529829719064	0.20330882067808234	0.18786764442405074	0.17654411124420005	0.15904412327031353	0.14463236269344493	0.11272059450821882	0.09727941825418726	0.07772059892597478
+]'; % dados semi 2 DPQ 2 - Furfural
 
     v0 = [1.25 1.20 1.15 1.0 0.9 0.8 0.7 0.66 8.4 8.1 7.5 7.0 0.05 -0.2 0.4 6.0]'; %chute ini
     
+
+[x,fval] =  fmincon(@(a) obj(a,Iexp,Vexp,v0),a0,[],[],[],[],lb,ub);
+Vteo = linspace(0,)
+Iteo=zeros(1,10);
+for i = 1:size(Vexp,1)
+        options = optimset('Display','off');
+        [sol] = fsolve(@(v) sistemaNL(x,v,Vexp(i)),v0,options);
+        Iteo(i) = sol(16);
+end
+
+plot(Iexp,Vexp,'o',Iteo,Vexp)
+xlabel('I (A/m2)')
+ylabel('Vcell (V)')
+title(strcat('Curva desempenho - Fobj = ',string(fval)))
+
+function o = obj(a,Iexp,Vexp,v0)
+    Iteo = zeros(size(Vexp));
     
     for i = 1:size(Vexp,1)
         options = optimset('Display','off');
-        [sol] = fsolve(@(v) sistemaNL(a,v,Vexp(i)),v0,options); 
+        [sol] = fsolve(@(v) sistemaNL(a,v,Vexp(i)),v0,options);
+        csvwrite('sols.csv',sol)
         Iteo(i) = sol(16);
     end
     c = [Iteo+0.01; a+0.01]
@@ -37,7 +59,7 @@ function fv = sistemaNL(a,v,vcell)
 
     v0 = 1.56 ;% mol/m³ - concentração inicial
     fx = 10 ;% assumido pelo artigo
-    kk = 0.207 ;% mol/m³.h 
+    kk = a(4) ;% mol/m³.h 
     K = [0.592 0.8 0.8 0.8]'; % os 3 últimos valores foram assumidos pelo artigo (K2-4)
     alfaa = a(1); %0.5 % constante
     alfac = a(2); %0.44 % constante
@@ -47,30 +69,11 @@ function fv = sistemaNL(a,v,vcell)
     F = 96485; % Constante de faraday - C/mol
     A = 1.2*10^-3; % área - m²
     YxA = 0.05; % rendimento 
-    Ecell = 0.32; % volts
-    Rcell = 4.9389*10^-5; % m³/S
+    Ecell = a(3); %0.32; % volts
+    Rcell = a(5);%4.9389*10^-5; % m³/S
     M=0.05; %quantidade de microorganismos no início (segundo artigo,0) mol/m³
     espce=0.000023; % assumido pelo artigo - m
 
-    % v(1) = y(1)
-    % v(2) = y(2)
-    % v(3) = y(3)
-    % v(4) = y(4)
-    % v(5) = y(5)
-    % v(6) = y(6)
-    % v(7) = y(7) 
-    % v(8) = y(8)
-    % v(9) = oxi(1)
-    % v(10) = oxi(2)
-    % v(11) = oxi(3)
-    % v(12) = oxi(4)
-    % v(13) = microorganismo final
-    % v(14) = etaA
-    % v(15) = etaC
-    % v(16)= Icell
-    % YxA = rendimento
-    % fx = wash out
-    %fv = zeros(16,1);   % dimensionando fv
     fv = zeros(16,1);
     fv(1) = v(1)- v0;
     fv(2) = kk*exp((alfaa*v(14)*F)/R/T)*v(2)/(K(1)+v(2))*v(13)-(q/A)*(v(1)-v(2)); % Equação 3-13
@@ -91,6 +94,7 @@ function fv = sistemaNL(a,v,vcell)
     fv(16) = v(16)-(Iref*(((v(11)+v(12))/2)/Cref)*exp(alfac*v(15)*F/R/T)); 
 end
 
+
 function [c,ceq] = cons(a)
 
     T = 303; %K
@@ -105,7 +109,8 @@ function [c,ceq] = cons(a)
     Cref=1;
 
     v = [1.25 1.20 1.15 1.0 0.9 0.8 0.7 0.66 8.4 8.1 7.5 7.0 0.05 -0.2 0.4 6.0]'; %chute ini
-    
+    v = csvread('sols.csv');
+
     v0 = 1.56 ;% mol/m³ - concentração inicial
     fx = 10 ;% assumido pelo artigo
     kk = 0.207 ;% mol/m³.h 
@@ -123,6 +128,17 @@ function [c,ceq] = cons(a)
     M=0.05; %quantidade de microorganismos no início (segundo artigo,0) mol/m³
     espce=0.000023; % assumido pelo artigo - m
 
-    c=kk*exp((alfaa*v(14)*F)/R/T)*v(2)/(K(1)+v(2))*v(13)-(q/A)*(v(1)-v(2)); % Equação 3-13;
+    c=zeros(1,8);
+    c(1) = v(1)- v0;
+    c(2) = kk*exp((alfaa*v(14)*F)/R/T)*v(2)/(K(1)+v(2))*v(13)-(q/A)*(v(1)-v(2)); % Equação 3-13
+    c(3) = v(3)- v(2);
+    c(4)= v(4)- K(2)*v(3);
+    c(5) = v(5)- v(4);
+    c(6) = v(6)- K(3)*v(5);
+    c(7) = v(7)- v(6);
+    c(8) = v(8);
+
     ceq=[];
 end
+
+
