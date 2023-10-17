@@ -6,7 +6,7 @@
 // Stephanie Aline Souza Rodrigues RA: 770711
 for i =1:10; clf(i);end
 
-function fv = funcv(v,v0,kk,K,alfaa,alfac,q,V,F,A,YxA,fx,espce,Kdec,Rcell,vcell,Ecell,M)
+function fv = funcv(v,v0,kk,K,alfaa,alfac,q,V,F,A,YxA,fx,espce,Kdec,Rcell,vcell,Ecell,M,D)
 // Calcula o vetor de funções f(v), onde f(v[solução])=0 
 
 T = 303 //K
@@ -15,7 +15,7 @@ P = 101325 //atm
 oxi0 = (0.21*P)/(R*T) // valor de entrada - mol/m³
 
 //D = 0.86^2.5*((T^1.75*5.8/10000)/(27.772*P))*3600/10000;
-D=0.08*10^-4*3600
+//D=0.08*10^-4*3600
 
 Iref=0.0064
 Cref=1
@@ -82,6 +82,7 @@ Ecell = 0.67 // volts
 Rcell = 4.9389*10^-5 // m³/S /////////////////////////////////////////// n seria m2 em vez de m3 aqui??
 M=0 //quantidade de microorganismos no início (segundo artigo,0) mol/m³
 espce=0.000023 // assumido pelo artigo - m
+D =0.08*10^-4*3600
 
 solucao=list();
 ACET = []
@@ -92,12 +93,12 @@ ETAA=  []
 ETAC = []
 POT =  []
 
-original=[kk,Rcell]
-condi = [0,kk/2,kk*2,Rcell/100,Rcell*100] //Condições para a analise de sensibilidade
+original=[q,Rcell]
+condi = [0,q/2,q*2,Rcell/100,Rcell*100] //Condições para a analise de sensibilidade
 for aux=1:size(condi,'c')
-    if aux==2 ||aux==3 ; kk=condi(aux); Rcell=original(2) //alfa muda, R não
-    elseif aux==4 ||aux==5 ; Rcell=condi(aux); kk=original(1) //R muda, alfa não
-    else kk=original(1); Rcell=original(2) //Nada muda
+    if aux==2 ||aux==3 ; q=condi(aux); Rcell=original(2) //alfa muda, R não
+    elseif aux==4 ||aux==5 ; Rcell=condi(aux); q=original(1) //R muda, alfa não
+    else q=original(1); Rcell=original(2) //Nada muda
     end
     
     voltagens = []
@@ -124,7 +125,7 @@ for aux=1:size(condi,'c')
         //Newton-Raphson
         while ok == 0 
           k=k+1;
-          fv = funcv(v,v0,kk,K,alfaa,alfac,q,V,F,A,YxA,fx,espce,Kdec,Rcell,vcell,Ecell,M);    //calcula o vetor fv:
+          fv = funcv(v,v0,kk,K,alfaa,alfac,q,V,F,A,YxA,fx,espce,Kdec,Rcell,vcell,Ecell,M,D);    //calcula o vetor fv:
         
           if sum(abs(fv)) <= tolfv then   // checando convergência em f(v)
             ok = 1;
@@ -134,7 +135,7 @@ for aux=1:size(condi,'c')
             for j=1:16
               vj = v(j); // guardando o valor de v(j)
               v(j) = v(j)+h; //incrementando o v(j) em h 
-              fvh = funcv(v,v0,kk,K,alfaa,alfac,q,V,F,A,YxA,fx,espce,Kdec,Rcell,vcell,Ecell,M);
+              fvh = funcv(v,v0,kk,K,alfaa,alfac,q,V,F,A,YxA,fx,espce,Kdec,Rcell,vcell,Ecell,M,D);
               Jac(:,j)=(fvh-fv)/h;
               v(j) = vj;
             end
