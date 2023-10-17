@@ -92,12 +92,12 @@ ETAA=  []
 ETAC = []
 POT =  []
 
-original=[alfaa,Rcell]
-condi = [0,alfaa/2,alfaa*2,Rcell/2,Rcell*2] //Condições para a analise de sensibilidade
+original=[kk,Rcell]
+condi = [0,kk/2,kk*2,Rcell/100,Rcell*100] //Condições para a analise de sensibilidade
 for aux=1:size(condi,'c')
-    if aux==2 ||aux==3 ; alfaa=condi(aux); Rcell=original(2) //alfa muda, R não
-    elseif aux==4 ||aux==5 ; Rcell=condi(aux); alfaa=original(1) //R muda, alfa não
-    else alfaa=original(1); Rcell=original(2) //Nada muda
+    if aux==2 ||aux==3 ; kk=condi(aux); Rcell=original(2) //alfa muda, R não
+    elseif aux==4 ||aux==5 ; Rcell=condi(aux); kk=original(1) //R muda, alfa não
+    else kk=original(1); Rcell=original(2) //Nada muda
     end
     
     voltagens = []
