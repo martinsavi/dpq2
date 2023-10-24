@@ -1,7 +1,7 @@
 clear; clc;
-a0 = [0.50;0.45;0.32;0.205;1e-5;4.5]; 
-lb = [0.50,0.45,0.32,0.100,0   ,4.4];
-ub = [0.50,0.45,0.32,0.300,5e-5,5  ];
+a0 = [0.50;0.45;0.32;0.205;1e-5;6.5]; 
+lb = [0.40,0.30,0.30,0.100,0   ,5.5  ];
+ub = [0.60,0.60,0.50,0.300,5e-1,6.5];
 
 %   Iexp = [1.03759418890913	1.93984923218668	4.2105267859144	5.50375960737219	6.48120319236476	7.39849617344079	8.25563855060027	10.2857136886617	11.0676692450222	12.0902260697715
 % ]';
@@ -90,7 +90,7 @@ function fv = sistemaNL(a,v,vcell)
     fv(12) = 3600*v(16)/4/F - D*(v(11)- v(12))/espce;
     % fv(13) = ((V*Kdec*v(13))/(A*YxA)) + ((q)/(A*fx*YxA)*(M - v(13))); % equação 4 do artigo igualada a zero
     fv(13) = kk*exp((alfaa*v(14)*F)/R/T)*v(2)/(K(1)+v(2))*v(13)-((V*Kdec*v(13))/(A*YxA)) + ((q)/(A*fx*YxA)*(M - v(13)));
-    fv(14) = -vcell + Ecell -v(15)- v(16)*Rcell - v(14)-R*T/F*log(ilim/sqrt((ilim-v(16))^2)); % primeira equação do frame 3
+    fv(14) = -vcell + Ecell -v(15)- v(16)*Rcell - v(14)-R*T/F*log(ilim/(ilim-v(16))); % primeira equação do frame 3
     fv(15) = 3600*v(16)/20/F - kk*exp((alfaa*v(14)*F)/R/T)*v(2)/(K(1)+v(2))*v(13); % terceira equação do frame 3
     fv(16) = v(16)-(Iref*(((v(11)+v(12))/2)/Cref)*exp(alfac*v(15)*F/R/T)); 
 end
