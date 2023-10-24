@@ -93,12 +93,14 @@ ETAA=  []
 ETAC = []
 POT =  []
 
-original=[q,Rcell]
-condi = [0,q/2,q*2,Rcell/100,Rcell*100] //Condições para a analise de sensibilidade
+original=[q,Rcell,kk]
+params = ['Vazão q','Rcell','fator preexp kk']
+condi = [0,q/2,q*2,Rcell/100,Rcell*100,kk/2,kk*2] //Condições para a analise de sensibilidade
 for aux=1:size(condi,'c')
-    if aux==2 ||aux==3 ; q=condi(aux); Rcell=original(2) //alfa muda, R não
-    elseif aux==4 ||aux==5 ; Rcell=condi(aux); q=original(1) //R muda, alfa não
-    else q=original(1); Rcell=original(2) //Nada muda
+    if aux==2 ||aux==3 ; q=condi(aux); Rcell=original(2); kk=original(3) //so alfa muda
+    elseif aux==4 ||aux==5 ; Rcell=condi(aux); q=original(1); kk=original(3) //so R muda
+    elseif aux==6 || aux==7; kk=condi(aux); q=original(1); Rcell=original(2)// so kk muda
+    else q=original(1); Rcell=original(2); kk=original(3) //Nada muda
     end
     
     voltagens = []
@@ -184,7 +186,7 @@ disp(solucao) //A lista solucao armazena em cada índice seu um vetor com todas 
 alfaa=original(1)
 Rcell=original(2)
 
-for aux=0:1 //n de parametros q variam na sensibilidade (alfa e RCell)
+for aux=0:size(original,'c')-1 //n de parametros q variam na sensibilidade (alfa e RCell)
     index = [1,2+2*aux,3+2*aux]
     t = linspace(1,8,8)
     scf(1+6*aux); plot(t,ACET(t,index))
@@ -200,8 +202,10 @@ for aux=0:1 //n de parametros q variam na sensibilidade (alfa e RCell)
     xlabel('y_i')
     ylabel('[O2] mol/L')
     
-    scf(3+6*aux); plot(CORR(:,index),VOLT(:,index))
+//    scf(3+6*aux)
+    scf(3); subplot(2,2,aux+1);plot(CORR(:,index),VOLT(:,index))
     legenda = [string(original(1+aux)),string(condi(2+2*aux)),string(condi(3+2*aux))]
+    title(params(aux+1))
     legend(legenda)
     xlabel('Icell A/m2' )
     ylabel('Vcell V')
