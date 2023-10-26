@@ -1,8 +1,8 @@
 clear; clc;
-a0 = [0.5592,    0.4500,    0.3565,    0.1560,    4e-5,    4.2130];
-lb = [0.40,0.30,0.20,0.150,4e-5   ,4.2];
-ub = [0.80,0.45,0.50,0.350,5e-3,4.4  ];
-
+a0 = [0.6000,0.4880,0.3453,0.1527,0.0005,4.2000];
+lb = [0.45  ,0.30  ,0.20  ,0.150 ,4e-5   ,4.2];
+ub = [0.80  ,0.70  ,0.50  ,0.550,5e-4,4.4  ];
+ 
 melhor_ate_agora=[0.5592,    0.4500,    0.3565,    0.1560,    4e-5,    4.2130];
 %   Iexp = [1.03759418890913	1.93984923218668	4.2105267859144	5.50375960737219	6.48120319236476	7.39849617344079	8.25563855060027	10.2857136886617	11.0676692450222	12.0902260697715
 % ]';
@@ -16,11 +16,11 @@ melhor_ate_agora=[0.5592,    0.4500,    0.3565,    0.1560,    4e-5,    4.2130];
 
     v0 = [1.25 1.20 1.15 1.0 0.9 0.8 0.7 0.66 8.4 8.1 7.5 7.0 0.05 -0.2 0.4 6.0]'; %chute ini
     
-% options = optimoptions('ga','TimeLimit',60);
-% [x,fval] = ga(@(a) obj(a,Iexp,Vexp,v0),size(a0,1),[],[],[],[],lb,ub,[],options);
+% options = optimoptions('ga','TimeLimit',60*10);
+% [x,fval] = ga(@(a) obj(a,Iexp,Vexp,v0),size(a0,2),[],[],[],[],lb,ub,[],options);
 
 options = optimoptions('simulannealbnd','TimeLimit',60*2);
-[x,fval] = simulannealbnd(@(a) obj(a,Iexp,Vexp,v0),a0,lb,ub);
+[x,fval] = simulannealbnd(@(a) obj(a,Iexp,Vexp,v0),a0,lb,ub,options);
 Vteo = linspace(0.05,Vexp(1),30);
 
 for i = 1:size(Vteo,2)

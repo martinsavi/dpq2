@@ -1,8 +1,9 @@
 clear; clc;
-a0 = [0.60;0.45;0.32;0.205;1e-5;4.5]; 
-lb = [0.50,0.45,0.02,0.100,0   ,4.4];
-ub = [0.80,0.45,0.82,0.300,5e-5,5  ];
+a0 = [0.6000,0.4880,0.3453,0.1527,0.0005,4.2000];
+lb = [0.45  ,0.30  ,0.20,0.150,4e-5   ,4.2];
+ub = [0.80  ,0.70  ,0.50,0.550,5e-4,4.4  ];
 
+melhor_ate_agora=[0.5592,    0.4500,    0.3565,    0.1560,    4e-5,    4.2130];
 %   Iexp = [1.03759418890913	1.93984923218668	4.2105267859144	5.50375960737219	6.48120319236476	7.39849617344079	8.25563855060027	10.2857136886617	11.0676692450222	12.0902260697715
 % ]';
 %     Vexp = [0.66286288281833	0.612695560680013	0.51870282474702	0.517403067839343	0.48963963129269	0.462366184933421	0.423861324718456	0.326127045742691	0.279645383820309	0.229047044443503
@@ -15,9 +16,11 @@ ub = [0.80,0.45,0.82,0.300,5e-5,5  ];
 
     v0 = [1.25 1.20 1.15 1.0 0.9 0.8 0.7 0.66 8.4 8.1 7.5 7.0 0.05 -0.2 0.4 6.0]'; %chute ini
     
-options = optimoptions('fmincon','StepTolerance',1e-10);
-% [x,fval] =  fmincon(@(a) obj(a,Iexp,Vexp,v0),a0,[],[],[],[],lb,ub,[],options);
-[x,fval] = ga(@(a) obj(a,Iexp,Vexp,v0),nvars,A,b,Aeq,beq,lb,ub)
+options = optimoptions('ga','TimeLimit',60*10);
+[x,fval] = ga(@(a) obj(a,Iexp,Vexp,v0),size(a0,1),[],[],[],[],lb,ub,[],options);
+
+% options = optimoptions('simulannealbnd','TimeLimit',60*2);
+% [x,fval] = simulannealbnd(@(a) obj(a,Iexp,Vexp,v0),a0,lb,ub,options);
 Vteo = linspace(0.05,Vexp(1),30);
 
 for i = 1:size(Vteo,2)
@@ -40,7 +43,7 @@ function o = obj(a,Iexp,Vexp,v0)
         csvwrite('sols.csv',sol)
         Iteo(i) = sol(16);
     end
-    c = [a+0.00]
+    c = [a+0.00001]
 %       o = (1-a(1))^2 +100*(a(2)-a(1)^2)^2; Rosenbrock funciona ok
       o = sum((Iteo-Iexp).^2); %MMQ
       
