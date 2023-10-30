@@ -54,7 +54,7 @@ Cref=1
 //  fv(13) = (M + 0.1531 - v(13)); 
   fv(13) = kk*exp((alfaa*v(14)*F)/R/T)*v(2)/(K(1)+v(2))*v(13)-((V*Kdec*v(13))/(A*YxA)) + ((q)/(A*fx*YxA)*(M - v(13)));
 //  fv(14) = -vcell + Ecell -v(15)- v(16)*Rcell - v(14); // primeira equação do frame 3
-  fv(14) = -vcell + Ecell -v(15)- v(16)*Rcell - v(14)-R*T/F*log(4.4097/(4.4097-v(16))); 
+  fv(14) = -vcell + Ecell -v(15)- v(16)*Rcell - v(14)-R*T/F*log(4.2/(4.2-v(16))); 
   fv(15) = 3600*v(16)/20/F - kk*exp((alfaa*v(14)*F)/R/T)*v(2)/(K(1)+v(2))*v(13); // terceira equação do frame 3
   fv(16) = v(16)-(Iref*(((v(11)+v(12))/2)/Cref)*exp(alfac*v(15)*F/R/T)); 
 endfunction
@@ -62,25 +62,29 @@ endfunction
 // Célula a combustivel microbiana
 //clear // limpa memória do scilab
 clc  // limpa a tela da janela de comando
-
+Iexp = [0.4358974716599329	0.7179486905462856	1.7777778884712203	2.034188146739269	2.2222224013443386	2.585470267224074	2.8632480470144603	3.431623923883132	3.7905986767094046	3.9829063704104404
+]';
+    Vexp = [0.2933823488265998	0.26198529829719064	0.20330882067808234	0.18786764442405074	0.17654411124420005	0.15904412327031353	0.14463236269344493	0.11272059450821882	0.09727941825418726	0.07772059892597478
+]';
+//0.6000    0.4880    0.3453    0.1527    0.0005    4.2000
 // Parâmetros do processo (sistema)
 N = 16
 T = 303//K
 v0 = 1.56 ;// mol/m³ - concentração inicial
 fx = 10 // assumido pelo artigo
 v = [1.25 1.20 1.15 1.0 0.9 0.8 0.7 0.66 8.4 8.1 7.5 7.0 0.05 -0.2 0.4 6.0]'; // mol/m³
-kk = 0.2816 ;// mol/m³.h 
+kk = 0.1527 ;// mol/m³.h 
 K = [0.592 0.8 0.8 0.8]'; // os 3 últimos valores foram assumidos pelo artigo (K2-4)
-alfaa = 0.5 // constante
-alfac = 0.45 // constante
+alfaa = 0.6 // constante
+alfac = 0.488 // constante
 Kdec = 8.33*10^-4 // valor assumido pelo artigo
 q = 2.25*10^-5  // vazão volumétrica - m³/h
 V = 1.596*10^-5 // m³ - volume
 F = 96485 // Constante de faraday - C/mol
 A = 1.2*10^-3 // área - m²
 YxA = 0.05 // rendimento 
-Ecell = 0.32 // volts
-Rcell = 4.9389*10^-5 // m³/S /////////////////////////////////////////// n seria m2 em vez de m3 aqui??
+Ecell = 0.3453 // volts
+Rcell = 0.0005 // m³/S /////////////////////////////////////////// n seria m2 em vez de m3 aqui??
 M=0.05 //quantidade de microorganismos no início (segundo artigo,0) mol/m³
 espce=0.000023 // assumido pelo artigo - m
 D =0.08*10^-4*3600
@@ -94,15 +98,15 @@ ETAA=  []
 ETAC = []
 POT =  []
 
-original=[q,Rcell,kk,T]
-params = ['Vazão q','Rcell','fator preexp kk','Temperatura']
-condi = [0,q/2,q*2,Rcell/100,Rcell*100,kk/2,kk*2,T-20,T+20] //Condições para a analise de sensibilidade
+original=[q,Rcell,kk,Ecell]
+params = ['Vazão q','Rcell','fator preexp kk','Ecell']
+condi = [0,q/2,q*2,Rcell/10,Rcell*10,kk/2,kk*2,Ecell/1.1,Ecell*1.1] //Condições para a analise de sensibilidade
 for aux=1:size(condi,'c')
-    if aux==2 ||aux==3 ; q=condi(aux); Rcell=original(2); kk=original(3);T=original(4) //so alfa muda
-    elseif aux==4 ||aux==5 ; Rcell=condi(aux); q=original(1); kk=original(3);T=original(4) //so R muda
-    elseif aux==6 || aux==7; kk=condi(aux); q=original(1); Rcell=original(2);T=original(4)// so kk muda
-    elseif aux==8 || aux==9 T=condi(aux);q=original(1); Rcell=original(2); kk=original(3) //so T muda
-    else q=original(1); Rcell=original(2); kk=original(3); T=original(4) //Nada muda
+    if aux==2 ||aux==3 ; q=condi(aux); Rcell=original(2); kk=original(3);Ecell=original(4) //so alfa muda
+    elseif aux==4 ||aux==5 ; Rcell=condi(aux); q=original(1); kk=original(3);Ecell=original(4) //so R muda
+    elseif aux==6 || aux==7; kk=condi(aux); q=original(1); Rcell=original(2);Ecell=original(4)// so kk muda
+    elseif aux==8 || aux==9 Ecell=condi(aux);q=original(1); Rcell=original(2); kk=original(3) //so T muda
+    else q=original(1); Rcell=original(2); kk=original(3); Ecell=original(4) //Nada muda
     end
     
     voltagens = []
@@ -205,8 +209,8 @@ for aux=0:size(original,'c')-1 //n de parametros q variam na sensibilidade (alfa
     ylabel('[O2] mol/L')
     
 //    scf(3+6*aux)
-    scf(3); subplot(2,2,aux+1);plot(CORR(:,index),VOLT(:,index))
-    legenda = [string(original(1+aux)),string(condi(2+2*aux)),string(condi(3+2*aux))]
+    scf(3); subplot(2,2,aux+1);plot(CORR(:,index),VOLT(:,index),Iexp,Vexp,'o')
+    legenda = [string(original(1+aux)),string(condi(2+2*aux)),string(condi(3+2*aux)),'exp']
     title(params(aux+1))
     legend(legenda)
     xlabel('Icell A/m2' )
