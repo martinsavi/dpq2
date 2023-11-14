@@ -1,12 +1,7 @@
 // DPQ2 - Professor Ruy de Sousa Júnior
-// Leonardo Pacheco RA: 773350
-// Marcus Vinicius Sgobi RA: 769819
-// Maria Clara Sertori RA: 769750
-// Paulo Eduardo da Silva Strozzi RA: 769926
-// Stephanie Aline Souza Rodrigues RA: 770711
 for i =1:10; clf(i);end
 
-function fv = funcv(v,v0,kk,K,alfaa,alfac,q,V,F,A,YxA,fx,espce,Kdec,Rcell,vcell,Ecell,M,D,T)
+function fv = funcv(v,v0,kk,K,alfaa,alfac,q,V,F,A,YxA,fx,espce,Kdec,Rcell,vcell,Ecell,M,D,T,ilim)
 // Calcula o vetor de funções f(v), onde f(v[solução])=0 
 
 R = 8.314 // m³.atm/K.mol
@@ -54,7 +49,7 @@ Cref=1
 //  fv(13) = (M + 0.1531 - v(13)); 
   fv(13) = kk*exp((alfaa*v(14)*F)/R/T)*v(2)/(K(1)+v(2))*v(13)-((V*Kdec*v(13))/(A*YxA)) + ((q)/(A*fx*YxA)*(M - v(13)));
 //  fv(14) = -vcell + Ecell -v(15)- v(16)*Rcell - v(14); // primeira equação do frame 3
-  fv(14) = -vcell + Ecell -v(15)- v(16)*Rcell - v(14)-R*T/F*log(4.2/(4.2-v(16))); 
+  fv(14) = -vcell + Ecell -v(15)- v(16)*Rcell - v(14)-R*T/F*log(ilim/(ilim-v(16))); 
   fv(15) = 3600*v(16)/20/F - kk*exp((alfaa*v(14)*F)/R/T)*v(2)/(K(1)+v(2))*v(13); // terceira equação do frame 3
   fv(16) = v(16)-(Iref*(((v(11)+v(12))/2)/Cref)*exp(alfac*v(15)*F/R/T)); 
 endfunction
@@ -69,6 +64,7 @@ Iexp = [0.4358974716599329	0.7179486905462856	1.7777778884712203	2.0341881467392
 //0.6000    0.4880    0.3453    0.1527    0.0005    4.2000
 // Parâmetros do processo (sistema)
 N = 16
+ilim=4.2//  A/m2
 T = 303//K
 v0 = 1.56 ;// mol/m³ - concentração inicial
 fx = 10 // assumido pelo artigo
@@ -98,15 +94,15 @@ ETAA=  []
 ETAC = []
 POT =  []
 
-original=[q,Rcell,kk,Ecell]
-params = ['Vazão q','Rcell','fator preexp kk','Ecell']
-condi = [0,q/2,q*2,Rcell/10,Rcell*10,kk/2,kk*2,Ecell/1.1,Ecell*1.1] //Condições para a analise de sensibilidade
+original=[ilim,Rcell,kk,Ecell]
+params = ['Corrente limitante ilim','Rcell','fator preexp kk','Ecell']
+condi = [0,ilim-0.1,ilim+0.1,Rcell/10,Rcell*10,kk/2,kk*2,Ecell/1.1,Ecell*1.1] //Condições para a analise de sensibilidade
 for aux=1:size(condi,'c')
-    if aux==2 ||aux==3 ; q=condi(aux); Rcell=original(2); kk=original(3);Ecell=original(4) //so alfa muda
-    elseif aux==4 ||aux==5 ; Rcell=condi(aux); q=original(1); kk=original(3);Ecell=original(4) //so R muda
-    elseif aux==6 || aux==7; kk=condi(aux); q=original(1); Rcell=original(2);Ecell=original(4)// so kk muda
-    elseif aux==8 || aux==9 Ecell=condi(aux);q=original(1); Rcell=original(2); kk=original(3) //so T muda
-    else q=original(1); Rcell=original(2); kk=original(3); Ecell=original(4) //Nada muda
+    if aux==2 ||aux==3 ; ilim=condi(aux); Rcell=original(2); kk=original(3);Ecell=original(4) //so alfa muda
+    elseif aux==4 ||aux==5 ; Rcell=condi(aux); ilim=original(1); kk=original(3);Ecell=original(4) //so R muda
+    elseif aux==6 || aux==7; kk=condi(aux); ilim=original(1); Rcell=original(2);Ecell=original(4)// so kk muda
+    elseif aux==8 || aux==9 Ecell=condi(aux);ilim=original(1); Rcell=original(2); kk=original(3) //so T muda
+    else ilim=original(1); Rcell=original(2); kk=original(3); Ecell=original(4) //Nada muda
     end
     
     voltagens = []
