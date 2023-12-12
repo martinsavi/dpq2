@@ -40,30 +40,31 @@ Cref=1
   fv(4) = v(4)- K(2)*v(3);
   fv(5) = v(5)- v(4);
   fv(6) = v(6)- K(3)*v(5);
-  fv(7) = kk*exp((alfaa*v(14)*F)/R/T)*((v(7)+v(6))/2)/(K(1)+((v(7)+v(6))/2))*v(13)- D*(v(6)- v(7))/espce; // Equação 3-13;
+  fv(7) = kk*exp((alfaa*v(14)*F)/R/T)*((v(7)+v(6))/2)/(K(1)+((v(7)+v(6))/2))- D*(v(6)- v(7))/espce; // Equação 3-13;
   fv(8) = v(8);
   fv(9) = oxi0 - v(9);
   fv(10)= v(10) - v(9);
   fv(11) = v(11)- K(4)*v(10);
-  fv(12) = 3600*v(16)/4/F - D*(v(11)- v(12))/espce;
+  fv(12) = 3600*v(16)/4/F - (0.08*10^-4*3600)*(v(11)- v(12))/espce;
   fv(13) = v(13)-1 //Nao tem Cx no michaelis menten
 //  fv(14) = -vcell + Ecell -v(15)- v(16)*Rcell - v(14); // primeira equação do frame 3
-  fv(14) = -vcell + Ecell -v(15)- v(16)*Rcell - v(14)-R*T/F*log(ilim/(ilim-v(16))); 
-  fv(15) = 3600*v(16)/14/F - kk*exp((alfaa*v(14)*F)/R/T)*((v(6)+v(7))/2)/(K(1)+(v(6)+v(7))/2)*v(13); // terceira equação do frame 3
+  fv(14) = -vcell + Ecell -v(15)- v(16)*Rcell - v(14); 
+  fv(15) = 3600*v(16)/14/F - kk*exp((alfaa*v(14)*F)/R/T)*((v(6)+v(7))/2)/(K(1)+(v(6)+v(7))/2); // terceira equação do frame 3
   fv(16) = v(16)-(Iref*(((v(11)+v(12))/2)/Cref)*exp(alfac*v(15)*F/R/T)); 
 endfunction
 
 // Célula a combustivel microbiana
 //clear // limpa memória do scilab
 clc  // limpa a tela da janela de comando
-Iexp = [0.001727941,
-0.001897059,
-0.002117647,
-0.002345588,
-0.002720588,
-0.003132353,
-0.003566176,
-0.004286765]';
+Iexp = [17.27941176 
+18.97058824
+21.17647059
+23.45588235
+27.20588235
+31.32352941
+35.66176471
+42.86764706
+]';
     Vexp = [0.719347783,
 0.67935956,
 0.630218069,
@@ -76,26 +77,27 @@ Iexp = [0.001727941,
 //0.6000    0.4880    0.3453    0.1527    0.0005    4.2000
 // Parâmetros do processo (sistema)
 N = 16
-ilim=4.2//  A/m2
+ilim=45//  A/m2
 T = 303//K
-v0 = 1.56 ;// mol/m³ - concentração inicial
+v0 = 100 ;// mol/m³ - concentração inicial
 fx = 10 // assumido pelo artigo
-v = [1.25 1.20 1.15 1.0 0.9 0.8 0.7 0.66 8.4 8.1 7.5 7.0 0.05 -0.2 0.4 6.0]'; // mol/m³
-kk = 0.1527 ;// mol/m³.h 
-K = [0.592 1.0 0.8 0.8]'; // os 3 últimos valores foram assumidos pelo artigo (K2-4)
-alfaa = 0.6 // constante
-alfac = 0.488 // constante
+v = [100 80 70 60 40 30 20 19 8.4 8.1 7.5 7.0 0.05 -0.2 0.4 6.0]'; // mol/m³
+kk = 0.5667 ;// mol/m³.h 
+Km = 100 // mol/m3
+K = [Km 1.0 0.8 0.8]'; // os 3 últimos valores foram assumidos pelo artigo (K2-4)
+alfaa = 0.1936 // constante
+alfac = 0.4747 // constante
 Kdec = 8.33*10^-4 // valor assumido pelo artigo
 q = 2.25*10^-5  // vazão volumétrica - m³/h
 V = 1.596*10^-5 // m³ - volume
 F = 96485 // Constante de faraday - C/mol
 A = 1.2*10^-3 // área - m²
 YxA = 0.05 // rendimento 
-Ecell = 0.3453 // volts
-Rcell = 0.0005 // m³/S /////////////////////////////////////////// n seria m2 em vez de m3 aqui??
+Ecell = 1.1653// volts
+Rcell = 0.02 // m³/S /////////////////////////////////////////// n seria m2 em vez de m3 aqui??
 M=0.05 //quantidade de microorganismos no início (segundo artigo,0) mol/m³
 espce=0.000023 // assumido pelo artigo - m
-D =0.08*10^-4*3600
+D =3.6e-6
 
 solucao=list();
 ACET = []
@@ -121,7 +123,7 @@ for aux=1:size(condi,'c')
     correntes=  []
     etaA = []
     etaC = []
-    for vcell=0.32:-0.025:0
+    for vcell=1.4:-0.025:0
     
         // Parâmetros do método numérico:
         tolfv = 1.0d-6;  //tolerância na função [mol/tempo]
@@ -141,7 +143,7 @@ for aux=1:size(condi,'c')
         //Newton-Raphson
         while ok == 0 
           k=k+1;
-          fv = funcv(v,v0,kk,K,alfaa,alfac,q,V,F,A,YxA,fx,espce,Kdec,Rcell,vcell,Ecell,M,D,T);    //calcula o vetor fv:
+          fv = funcv(v,v0,kk,K,alfaa,alfac,q,V,F,A,YxA,fx,espce,Kdec,Rcell,vcell,Ecell,M,D,T,ilim);    //calcula o vetor fv:
         
           if sum(abs(fv)) <= tolfv then   // checando convergência em f(v)
             ok = 1;
@@ -151,7 +153,8 @@ for aux=1:size(condi,'c')
             for j=1:16
               vj = v(j); // guardando o valor de v(j)
               v(j) = v(j)+h; //incrementando o v(j) em h 
-              fvh = funcv(v,v0,kk,K,alfaa,alfac,q,V,F,A,YxA,fx,espce,Kdec,Rcell,vcell,Ecell,M,D,T);
+              
+              fvh = funcv(v,v0,kk,K,alfaa,alfac,q,V,F,A,YxA,fx,espce,Kdec,Rcell,vcell,Ecell,M,D,T,ilim);
               Jac(:,j)=(fvh-fv)/h;
               v(j) = vj;
             end
