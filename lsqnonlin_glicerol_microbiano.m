@@ -1,7 +1,7 @@
 clear; clc;
-a0 = [0.50  ,0.50  ,1.000,0.0000360,4e-1 ,0.01];
-lb = [0.50  ,0.50  ,1.000,0.0000360,4e-5 ,0.01 ];
-ub = [0.70  ,0.70  ,1.000,0.0000360 ,5e+1,0.01 ];
+a0 = [0.50  ,0.50  ,0.700,0.002, 1 ,0.01];
+lb = [0.10  ,0.10  ,0.100,0.0002, 0.1 ,0.01 ];
+ub = [0.90  ,0.90  ,1.000,0.02,  10 ,0.01 ];
 
 Vexp = [0.060048426
 0.102663438
@@ -15,7 +15,6 @@ Vexp = [0.060048426
 0.666343826
 0.676029056
 0.695399516
-0.7031477
 ]';
 Iexp = [0.38424015
 0.354221388
@@ -29,7 +28,6 @@ Iexp = [0.38424015
 0.009005629
 0.005253283
 0.000750469
-0
 ]';
     v0 = [22.26 15 13 12 11 10 5 2 8.4 8.1 7.5 7.0 0.05 -0.2 0.4 6.0]'; %chute ini
     
@@ -37,7 +35,7 @@ options = optimset('TolFun',1e-20,'TolX',1e-20);
 options.Algorithm = 'levenberg-marquardt';
 % options.Algorithm = 'trust-region-reflective';
 [x,fval] =  lsqnonlin(@(a)obj(a),a0,lb,ub,options);
-Vteo = linspace(Vexp(1),1.5,30);
+Vteo = linspace(Vexp(1),1,30);
 
 for i = 1:size(Vteo,2)
         options = optimset('Display','off');
@@ -64,7 +62,6 @@ function o = obj(a)
 0.666343826
 0.676029056
 0.695399516
-0.7031477
 ]';
 Iexp = [0.38424015
 0.354221388
@@ -78,7 +75,6 @@ Iexp = [0.38424015
 0.009005629
 0.005253283
 0.000750469
-0
 ]';
     Iteo = zeros(size(Vexp));
     v0 = [22.26 15 13 12 11 10 5 2 8.4 8.1 7.5 7.0 0.05 -0.2 0.4 6.0]'; %chute ini
@@ -109,14 +105,14 @@ function fv = sistemaNL(a,v,vcell)
     Cref=1;
     
     
-    v0 = 20.56 ;% mol/m³ - concentração inicial
+    v0 = 28.56 ;% mol/m³ - concentração inicial
     fx = 10 ;% assumido pelo artigo
     kk = a(4) ;% mol/m³.h 
     K = [a(6) 0.8 0.8 0.8]'; % os 3 últimos valores foram assumidos pelo artigo (K2-4)
     alfaa = a(1); %0.5 % constante
     alfac = a(2); %0.44 % constante
     Kdec = 8.33*10^-4; % valor assumido pelo artigo
-    q = 2.25*10^-3; % vazão volumétrica - m³/h
+    q = 2.25*10^-5; % vazão volumétrica - m³/h
     V = 1.596*10^-5; % m³ - volume
     F = 96485; % Constante de faraday - C/mol
     A = 1.2*10^-3; % área - m²
@@ -141,7 +137,7 @@ function fv = sistemaNL(a,v,vcell)
     fv(12) = 3600*v(16)/4/F - D*(v(11)- v(12))/espce;
     % fv(13) = ((V*Kdec*v(13))/(A*YxA)) + ((q)/(A*fx*YxA)*(M - v(13))); % equação 4 do artigo igualada a zero
     fv(13) = kk*exp((alfaa*v(14)*F)/R/T)*v(2)/(K(1)+v(2))*v(13)-((V*Kdec*v(13))/(A*YxA)) + ((q)/(A*fx*YxA)*(M - v(13)));
-    fv(14) = -vcell + Ecell -v(15)- v(16)*Rcell - v(14); % primeira equação do frame 3
+    fv(14) = -vcell + Ecell - v(16)*Rcell-v(14)-v(15) ; % primeira equação do frame 3
     fv(15) = 3600*v(16)/14/F - kk*exp((alfaa*v(14)*F)/R/T)*v(2)/(K(1)+v(2))*v(13); % terceira equação do frame 3
     fv(16) = v(16)-(Iref*(((v(11)+v(12))/2)/Cref)*exp(alfac*v(15)*F/R/T)); 
 end
