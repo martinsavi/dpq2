@@ -6,7 +6,7 @@
 // Stephanie Aline Souza Rodrigues RA: 770711
 //for i =1:10; clf(i);end
 clf(3)
-function fv = funcv(v,v0,kk,K,alfaa,alfac,q,V,F,A,YxA,fx,espce,Kdec,Rcell,vcell,Ecell,M,D,T)
+function fv = funcv(v,v0,kk,K,alfaa,alfac,q,V,F,A,YxA,fx,espce,Kdec,Rcell,vcell,Ecell,M,D,T,ilim)
 // Calcula o vetor de funções f(v), onde f(v[solução])=0 
 
 R = 8.314 // m³.atm/K.mol
@@ -52,7 +52,7 @@ Cref=1
   fv(11) = v(11)- K(4)*v(10);
   fv(12) = 3600*v(16)/4/F - D*(v(11)- v(12))/espce;
   fv(13) = kk*exp((alfaa*v(14)*F)/R/T)*v(2)/(K(1)+v(2))*v(13)-((V*Kdec*v(13))/(A*YxA)) + ((q)/(A*fx*YxA)*(M - v(13)));
-    fv(14) = -vcell + Ecell -v(15)- v(16)*Rcell - v(14); // primeira equação do frame 3
+    fv(14) = -vcell + Ecell -v(15)- v(16)*Rcell - v(14)-R*T/F*log(ilim/(ilim-v(16))); // primeira equação do frame 3
     fv(15) = 3600*v(16)/14/F - kk*exp((alfaa*v(14)*F)/R/T)*v(2)/(K(1)+v(2))*v(13); // terceira equação do frame 3
     fv(16) = v(16)-(Iref*(((v(11)+v(12))/2)/Cref)*exp(alfac*v(15)*F/R/T)); 
 endfunction
@@ -103,21 +103,22 @@ T = 303//K
 v0 = 1.56 ;// mol/m³ - concentração inicial
 fx = 10 // assumido pelo artigo
 v = [.125 .120 .115 .10 .09 .08 .07 .066 8.4 8.1 7.5 7.0 0.05 -0.2 0.4 0.6]'; // mol/m³
-kk = 0.0000207/4 ;// mol/m³.h 
+kk = 0.0000207/2 ;// mol/m³.h 
 K = [0.592 0.8 0.8 0.8]'; // os 3 últimos valores foram assumidos pelo artigo (K2-4)
-alfaa = 0.5 // constante
-alfac = 0.5 // constante
+alfaa = 0.46 // constante
+alfac = 0.50 // constante
 Kdec = 8.33*10^-4 // valor assumido pelo artigo
-q = 1/8*2.5*10^-6  // vazão volumétrica - m³/h
+q = 1/4*2.5*10^-6  // vazão volumétrica - m³/h
 V = 5.5*10^-5 // m³ - volume
 F = 96485 // Constante de faraday - C/mol
 A = 5*10^-4 // área - m²
 YxA = 0.05 // rendimento 
-Ecell = 0.68 // volts
-Rcell = 4.9389*10^-3 // m³/S /////////////////////////////////////////// n seria m2 em vez de m3 aqui??
+Ecell = 0.70 // volts
+Rcell = 4.9389*10^-60 // m³/S /////////////////////////////////////////// n seria m2 em vez de m3 aqui??
 M=0.05 //quantidade de microorganismos no início (segundo artigo,0) mol/m³
 espce=0.000023 // assumido pelo artigo - m
 D =0.08*10^-4*3600
+ilim=0.40
 
 solucao=list();
 ACET = []
@@ -143,7 +144,7 @@ for aux=1:size(condi,'c')
     correntes=  []
     etaA = []
     etaC = []
-    for vcell=0.454:-0.05:0.15
+    for vcell=0.454:-0.05:0.18
     
         // Parâmetros do método numérico:
         tolfv = 1.0d-6;  //tolerância na função [mol/tempo]
@@ -232,11 +233,11 @@ for aux=0:size(original,'c')-1 //n de parametros q variam na sensibilidade (alfa
     ylabel('[Acetato] mol/L')
     
     t2 = linspace(1,4,4) + 8
-    scf(2+6*aux); plot(t2,O2(:,index))
-    legenda = [string(original(1+aux)),string(condi(2+2*aux)),string(condi(3+2*aux))]
-    legend(legenda)
-    xlabel('y_i')
-    ylabel('[O2] mol/L')
+//    scf(2+6*aux); plot(t2,O2(:,index))
+//    legenda = [string(original(1+aux)),string(condi(2+2*aux)),string(condi(3+2*aux))]
+//    legend(legenda)
+//    xlabel('y_i')
+//    ylabel('[O2] mol/L')
     
 //    scf(3+6*aux)
     scf(3); subplot(2,2,aux+1);plot(CORR(:,index),VOLT(:,index),Iexp,Vexp,'o')
@@ -254,26 +255,26 @@ for aux=0:size(original,'c')-1 //n de parametros q variam na sensibilidade (alfa
 //    ylabel('Vcell V')
     
     
-    scf(4); subplot(2,2,aux+1);plot(CORR(:,index),POT(:,index))
-    legenda = [string(original(1+aux)),string(condi(2+2*aux)),string(condi(3+2*aux))]
-    title(params(aux+1))
-    legend(legenda,-4)
-    xlabel('Icell A/m2' )
-    ylabel('Pcell W/m2')
-    
-    scf(5+6*aux); plot(CORR(:,index),ETAA(:,index),[0,12],[0,0])
-    legenda = [string(original(1+aux)),string(condi(2+2*aux)),string(condi(3+2*aux))]
-    legend(legenda)
-    xlabel('Icell A/m2' )
-    ylabel('Sobrepotencial V')
-    title('Anódico')
-
-    scf(6+6*aux); plot(CORR(:,index),ETAC(:,index),[0,12],[0,0])
-    legenda = [string(original(1+aux)),string(condi(2+2*aux)),string(condi(3+2*aux))]
-    legend(legenda)
-    xlabel('Icell A/m2' )
-    ylabel('Sobrepotencial V')
-    title('Catódico')
+//    scf(4); subplot(2,2,aux+1);plot(CORR(:,index),POT(:,index))
+//    legenda = [string(original(1+aux)),string(condi(2+2*aux)),string(condi(3+2*aux))]
+//    title(params(aux+1))
+//    legend(legenda,-4)
+//    xlabel('Icell A/m2' )
+//    ylabel('Pcell W/m2')
+//    
+//    scf(5+6*aux); plot(CORR(:,index),ETAA(:,index),[0,12],[0,0])
+//    legenda = [string(original(1+aux)),string(condi(2+2*aux)),string(condi(3+2*aux))]
+//    legend(legenda)
+//    xlabel('Icell A/m2' )
+//    ylabel('Sobrepotencial V')
+//    title('Anódico')
+//
+//    scf(6+6*aux); plot(CORR(:,index),ETAC(:,index),[0,12],[0,0])
+//    legenda = [string(original(1+aux)),string(condi(2+2*aux)),string(condi(3+2*aux))]
+//    legend(legenda)
+//    xlabel('Icell A/m2' )
+//    ylabel('Sobrepotencial V')
+//    title('Catódico')
 end
 
 // exporta dados

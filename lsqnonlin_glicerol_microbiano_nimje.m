@@ -1,7 +1,7 @@
 clear; clc;
-lb = [0.10  ,0.10  ,0.100,1e-6, 4e-3 ,0.1];
-a0 = [0.50  ,0.50  ,0.67,0.0000207, 2*4.9389*10^-2 ,0.592 ];
-ub = [0.90  ,0.90  ,0.800,1e-4, 4e-1 ,10 ];
+lb = [0.45  ,0.45  ,0.650,0.0000207/2, 0 ,0.4 ];
+a0 = [0.46  ,0.50 ,0.700,0.0000207/2, 0 ,0.4 ];
+ub = [0.47  ,0.51 ,0.750,0.0000207/2, 0 ,0.4 ];
 
 Vexp = [0.453303965
 0.413656388
@@ -45,8 +45,7 @@ options = optimset('TolFun',1e-20,'TolX',1e-20);
 options.Algorithm = 'levenberg-marquardt';
 % options.Algorithm = 'trust-region-reflective';
 [x,fval] =  lsqnonlin(@(a)obj(a),a0,lb,ub,options);
-Vteo = linspace(0.18,max(Vexp),30);
-Vteo(26) = 0.4;
+Vteo = linspace(min(Vexp)+0.005,max(Vexp),30);
 
 for i = 1:size(Vteo,2)
         options = optimset('Display','off');
@@ -114,7 +113,7 @@ Iexp = [0.029476485
 end
 
 function fv = sistemaNL(a,v,vcell)
-    T = 35.5+273.15; %K
+    T = 303; %K
     R = 8.314; % m³.atm/K.mol
     P = 101325; %atm
     oxi0 = (0.21*P)/(R*T); % valor de entrada - mol/m³
@@ -129,11 +128,12 @@ function fv = sistemaNL(a,v,vcell)
     v0 = 1.56 ;% mol/m³ - concentração inicial
     fx = 10 ;% assumido pelo artigo
     kk = a(4) ;% mol/m³.h 
-    K = [a(6) 0.8 0.8 0.8]'; % os 3 últimos valores foram assumidos pelo artigo (K2-4)
+    K = [0.592 0.8 0.8 0.8]'; % os 3 últimos valores foram assumidos pelo artigo (K2-4)
+    ilim = a(6);
     alfaa = a(1); %0.5 % constante
     alfac = a(2); %0.44 % constante
     Kdec = 8.33*10^-4; % valor assumido pelo artigo
-    q = 1/4*2.25*10^-6; % vazão volumétrica - m³/h
+    q = 1/4*2.5*10^-6; % vazão volumétrica - m³/h
     V = 5.5*10^-5; % m³ - volume
     F = 96485; % Constante de faraday - C/mol
     A = 5*10^-4; % área - m²
@@ -143,24 +143,23 @@ function fv = sistemaNL(a,v,vcell)
     M=0.05; %quantidade de microorganismos no início (segundo artigo,0) mol/m³
     espce=0.000023; % assumido pelo artigo - m
 
-    fv = zeros(16,1);
-    fv(1) = v(1)- v0;
-    fv(2) = kk*exp((alfaa*v(14)*F)/R/T)*v(2)/(K(1)+v(2))*v(13)-(q/A)*(v(1)-v(2)); % Equação 3-13
-    fv(3) = v(3)- v(2);
-    fv(4) = v(4)- K(2)*v(3);
-    fv(5) = v(5)- v(4);
-    fv(6) = v(6)- K(3)*v(5);
-    fv(7) = v(7)- v(6);
-    fv(8) = v(8);
-    fv(9) = oxi0 - v(9);
-    fv(10)= v(10) - v(9);
-    fv(11) = v(11)- K(4)*v(10);
-    fv(12) = 3600*v(16)/4/F - D*(v(11)- v(12))/espce;
-    % fv(13) = ((V*Kdec*v(13))/(A*YxA)) + ((q)/(A*fx*YxA)*(M - v(13))); % equação 4 do artigo igualada a zero
-    fv(13) = kk*exp((alfaa*v(14)*F)/R/T)*v(2)/(K(1)+v(2))*v(13)-((V*Kdec*v(13))/(A*YxA)) + ((q)/(A*fx*YxA)*(M - v(13)));
-    fv(14) = -vcell + Ecell -v(15)- v(16)*Rcell - v(14); % primeira equação do frame 3
-    fv(15) = 3600*v(16)/14/F - kk*exp((alfaa*v(14)*F)/R/T)*v(2)/(K(1)+v(2))*v(13); % terceira equação do frame 3
-    fv(16) = v(16)-(Iref*(((v(11)+v(12))/2)/Cref)*exp(alfac*v(15)*F/R/T)); 
+  fv = zeros(16,1);  
+  fv(1) = v(1)- v0;
+  fv(2) = kk*exp((alfaa*v(14)*F)/R/T)*v(2)/(K(1)+v(2))*v(13)-(q/A)*(v(1)-v(2)); 
+  fv(3) = v(3)- v(2);
+  fv(4) = v(4)- K(2)*v(3);
+  fv(5) = v(5)- v(4);
+  fv(6) = v(6)- K(3)*v(5);
+  fv(7) = v(7)- v(6);
+  fv(8) = v(8);
+  fv(9) = oxi0 - v(9);
+  fv(10)= v(10) - v(9);
+  fv(11) = v(11)- K(4)*v(10);
+  fv(12) = 3600*v(16)/4/F - D*(v(11)- v(12))/espce;
+  fv(13) = kk*exp((alfaa*v(14)*F)/R/T)*v(2)/(K(1)+v(2))*v(13)-((V*Kdec*v(13))/(A*YxA)) + ((q)/(A*fx*YxA)*(M - v(13)));
+  fv(14) = -vcell + Ecell -v(15)- v(16)*Rcell - v(14)-R*T/F*real(log(ilim/(ilim-v(16)))); 
+  fv(15) = 3600*v(16)/14/F - kk*exp((alfaa*v(14)*F)/R/T)*v(2)/(K(1)+v(2))*v(13); 
+  fv(16) = v(16)-(Iref*(((v(11)+v(12))/2)/Cref)*exp(alfac*v(15)*F/R/T)); 
 end
 
 
