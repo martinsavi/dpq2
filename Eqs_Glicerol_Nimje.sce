@@ -114,7 +114,7 @@ F = 96485 // Constante de faraday - C/mol
 A = 5*10^-4 // área - m²
 YxA = 0.05 // rendimento 
 Ecell = 0.70 // volts
-Rcell = 4.9389*10^-60 // m³/S /////////////////////////////////////////// n seria m2 em vez de m3 aqui??
+Rcell = 4.9389*10^-6 // m³/S /////////////////////////////////////////// n seria m2 em vez de m3 aqui??
 M=0.05 //quantidade de microorganismos no início (segundo artigo,0) mol/m³
 espce=0.000023 // assumido pelo artigo - m
 D =0.08*10^-4*3600
@@ -129,22 +129,22 @@ ETAA=  []
 ETAC = []
 POT =  []
 
-original=[q,Rcell,kk,T]
-params = ['Vazão q','Rcell','fator preexp kk','Temperatura']
-condi = [0,q/2,q*2,Rcell/100,Rcell*100,kk/2,kk*2,T-20,T+20] //Condições para a analise de sensibilidade
+original=[ilim,Rcell,kk,Ecell]
+params = ['i lim','Rcell','fator preexp kk','Ecell']
+condi = [0,ilim*0.7,ilim*1.3,Rcell/100,Rcell*100,kk/2,kk*2,Ecell-0.05,Ecell+0.05] //Condições para a analise de sensibilidade
 for aux=1:size(condi,'c')
-    if aux==2 ||aux==3 ; q=condi(aux); Rcell=original(2); kk=original(3);T=original(4) //so alfa muda
-    elseif aux==4 ||aux==5 ; Rcell=condi(aux); q=original(1); kk=original(3);T=original(4) //so R muda
-    elseif aux==6 || aux==7; kk=condi(aux); q=original(1); Rcell=original(2);T=original(4)// so kk muda
-    elseif aux==8 || aux==9 T=condi(aux);q=original(1); Rcell=original(2); kk=original(3) //so T muda
-    else q=original(1); Rcell=original(2); kk=original(3); T=original(4) //Nada muda
+    if aux==2 ||aux==3 ; ilim=condi(aux); Rcell=original(2); kk=original(3);Ecell=original(4) //so alfa muda
+    elseif aux==4 ||aux==5 ; Rcell=condi(aux); ilim=original(1); kk=original(3);Ecell=original(4) //so R muda
+    elseif aux==6 || aux==7; kk=condi(aux); ilim=original(1); Rcell=original(2);Ecell=original(4)// so kk muda
+    elseif aux==8 || aux==9 Ecell=condi(aux);ilim=original(1); Rcell=original(2); kk=original(3) //so T muda
+    else ilim=original(1); Rcell=original(2); kk=original(3); Ecell=original(4) //Nada muda
     end
     
     voltagens = []
     correntes=  []
     etaA = []
     etaC = []
-    for vcell=0.454:-0.05:0.18
+    for vcell=0.454:-0.02:0.18
     
         // Parâmetros do método numérico:
         tolfv = 1.0d-6;  //tolerância na função [mol/tempo]
@@ -278,13 +278,13 @@ for aux=0:size(original,'c')-1 //n de parametros q variam na sensibilidade (alfa
 end
 
 // exporta dados
-csvWrite(ACET,'acetato.csv',' ',',')
-csvWrite(O2,'oxigenio.csv',' ',',')
-csvWrite(VOLT,'voltagens.csv',' ',',')
-csvWrite(CORR,'correntes.csv',' ',',')
-csvWrite(POT,'potencias.csv',' ',',')
-csvWrite(ETAA,'sobrepotencialA.csv',' ',',')
-csvWrite(ETAC,'sobrepotencialC.csv',' ',',')
+csvWrite(real(ACET),'acetato.csv',' ','.',"%.4e")
+csvWrite(real(O2),'oxigenio.csv',' ','.',"%.4e")
+csvWrite(real(VOLT),'voltagens.csv',' ','.',"%.4e")
+csvWrite(real(CORR),'correntes.csv',' ','.',"%.4e")
+csvWrite(real(POT),'potencias.csv',' ','.',"%.4e")
+csvWrite(real(ETAA),'sobrepotencialA.csv',' ','.',"%.4e")
+csvWrite(real(ETAC),'sobrepotencialC.csv',' ','.',"%.4e")
 
 
 
