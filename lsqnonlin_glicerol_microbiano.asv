@@ -1,7 +1,7 @@
 clear; clc;
-a0 = [0.4575    0.1390    0.6661    0.1563    0.4000  319.9777  28.56   2.55e-5  ];
-lb = [0.10     ,0.10     ,0.500    ,0.1      , 4e-2 ,100       , 1 , 1e-7  ];
-ub = [0.9       ,0.2     ,0.700    ,0.5      , 4e-0 ,1000     , 100,  1e-3 ];
+a0 = [0.4575    0.1390    0.6661    0.1563    0.4000  319.9777,28.56,2.55e-5  ];
+lb = [0.10     ,0.10     ,0.500    ,0.1      , 4e-2 ,100       , 1 , 1e-  ];
+ub = [0.9       ,0.2     ,0.700    ,0.5      , 4e-0 ,1000     , 100,   ];
 
 Vexp = [0.060048426
 0.102663438
@@ -36,7 +36,7 @@ Iexp = [0.38424015
 
 options = optimoptions('ga','ConstraintTolerance',1e-8,'PlotFcn', @gaplotbestf);
 %options = optimset('TolFun',1e-20,'TolX',1e-20);
-[x,fval] = ga(@(a)obj(a),8,[],[],[],[],lb,ub,[],options);
+[x,fval] = ga(@(a)obj(a),6,[],[],[],[],lb,ub,[],options);
 
 %options.Algorithm = 'levenberg-marquardt';
 %[x,fval] =  lsqnonlin(@(a)obj(a),a0,lb,ub,options);
